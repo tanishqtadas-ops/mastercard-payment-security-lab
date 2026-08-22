@@ -247,13 +247,12 @@ SHAP = explanation
 
 # 11. CURRENT STATUS
 
-Phase 0 — Project setup: IN PROGRESS
+Phase 0 — Project setup: COMPLETE
+Phase 1 — Common data contracts (schemas): COMPLETE
+Phase 2 — Generic attack genome engine: COMPLETE
+Phase 3 — Round Controller + shared interfaces: COMPLETE
+Phase 4 — Generic Red/Blue mock pipeline: COMPLETE
+Phase 5 — Integration contracts + team handoff: COMPLETE
 
-Phase 1 — Common schemas: NOT STARTED
-Phase 2 — Genome engine: NOT STARTED
-Phase 3 — Round Controller: NOT STARTED
-Phase 4 — Family 1 generator: NOT STARTED
-Phase 5 — Family 1 Blue Team: NOT STARTED
-Phase 6 — SHAP integration: NOT STARTED
-Phase 7 — Family 1 mutation: NOT STARTED
-Phase 8 — Complete Family 1 loop: NOT STARTED
+See docs/INTEGRATION_CONTRACTS.md and docs/TEAM_HANDOFF.md for the
+stable interface boundaries and team ownership assignments.
