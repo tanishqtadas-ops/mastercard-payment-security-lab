@@ -297,3 +297,150 @@ def test_baseline_dataset_file_integrity():
         assert rec.identity_id.startswith("ident_")
         assert rec.account_metadata["kyc_verification_status"] == "verified"
         assert rec.lifecycle_info["risk_event_count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Task 2: Held-Out Legitimate Evaluation Dataset Tests
+# ---------------------------------------------------------------------------
+
+def test_heldout_dataset_file_exists():
+    """Requirement 1: Held-out evaluation file exists on disk and is non-empty."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    assert heldout_path.exists(), "Held-out dataset file data/held_out/heldout_identities.json does not exist."
+    assert heldout_path.is_file(), "data/held_out/heldout_identities.json is not a regular file."
+    assert heldout_path.stat().st_size > 0, "Held-out dataset file is empty."
+
+
+def test_heldout_dataset_exact_record_count():
+    """Requirement 2: Exactly 500 records are present in the held-out dataset."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    heldout_dataset = load_dataset(heldout_path)
+    assert len(heldout_dataset) == 500, f"Expected exactly 500 held-out records, found {len(heldout_dataset)}."
+
+
+def test_heldout_records_validate_synthetic_identity_schema():
+    """Requirement 3: Every record in held-out dataset strictly validates as SyntheticIdentity."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    heldout_dataset = load_dataset(heldout_path)
+
+    for idx, rec in enumerate(heldout_dataset):
+        assert isinstance(rec, SyntheticIdentity), f"Record index {idx} is not a SyntheticIdentity."
+        dump = rec.model_dump()
+        reconstructed = SyntheticIdentity(**dump)
+        assert reconstructed.identity_id == rec.identity_id
+        assert reconstructed.identity_attributes == rec.identity_attributes
+
+
+def test_heldout_dataset_deterministic_reproducibility():
+    """Requirement 4: Held-out dataset is reproducible; regenerating with seed=4242 yields identical records."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    persisted_dataset = load_dataset(heldout_path)
+
+    gen_fresh = LegitimateIdentityGenerator(seed=4242)
+    fresh_dataset = gen_fresh.generate_dataset(n=500)
+
+    assert len(persisted_dataset) == len(fresh_dataset) == 500
+    for p_rec, f_rec in zip(persisted_dataset, fresh_dataset):
+        assert p_rec.identity_id == f_rec.identity_id
+        assert p_rec.identity_attributes == f_rec.identity_attributes
+        assert p_rec.contact_attributes == f_rec.contact_attributes
+        assert p_rec.account_metadata == f_rec.account_metadata
+        assert p_rec.device_context == f_rec.device_context
+        assert p_rec.lifecycle_info == f_rec.lifecycle_info
+
+
+def test_heldout_dataset_different_from_training_baseline():
+    """Requirement 5: Held-out dataset differs from the training baseline across IDs and content."""
+    baseline_path = Path("data/legitimate/baseline_identities.json")
+    heldout_path = Path("data/held_out/heldout_identities.json")
+
+    baseline_dataset = load_dataset(baseline_path)
+    heldout_dataset = load_dataset(heldout_path)
+
+    assert len(baseline_dataset) == 500
+    assert len(heldout_dataset) == 500
+
+    # Compare representative records at identical indices
+    for i in range(min(len(baseline_dataset), len(heldout_dataset))):
+        b_rec = baseline_dataset[i]
+        h_rec = heldout_dataset[i]
+
+        assert b_rec.identity_id != h_rec.identity_id, (
+            f"Index {i} has identical identity_id across baseline and holdout: {b_rec.identity_id}"
+        )
+        assert b_rec.account_metadata["account_id"] != h_rec.account_metadata["account_id"]
+        assert b_rec.contact_attributes["primary_email"] != h_rec.contact_attributes["primary_email"]
+
+
+def test_heldout_and_baseline_zero_identity_overlap():
+    """Requirement 6: Primary separation invariant: strictly zero identity overlap between baseline and holdout."""
+    baseline_path = Path("data/legitimate/baseline_identities.json")
+    heldout_path = Path("data/held_out/heldout_identities.json")
+
+    baseline_dataset = load_dataset(baseline_path)
+    heldout_dataset = load_dataset(heldout_path)
+
+    baseline_ids = {rec.identity_id for rec in baseline_dataset}
+    heldout_ids = {rec.identity_id for rec in heldout_dataset}
+    assert len(baseline_ids) == 500
+    assert len(heldout_ids) == 500
+
+    overlap_ids = baseline_ids.intersection(heldout_ids)
+    assert len(overlap_ids) == 0, f"Found overlapping identity IDs between baseline and holdout: {overlap_ids}"
+
+    # Also verify zero account ID and email overlaps
+    baseline_emails = {rec.contact_attributes["primary_email"] for rec in baseline_dataset}
+    heldout_emails = {rec.contact_attributes["primary_email"] for rec in heldout_dataset}
+    email_overlap = baseline_emails.intersection(heldout_emails)
+    assert len(email_overlap) == 0, f"Found overlapping emails between baseline and holdout: {email_overlap}"
+
+
+def test_heldout_dataset_contains_no_attack_objects_or_labels():
+    """Requirement 7: Held-out records contain no attack objects, genomes, or fraud labels."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    heldout_dataset = load_dataset(heldout_path)
+
+    for rec in heldout_dataset:
+        assert not isinstance(rec, AttackEvent)
+        assert isinstance(rec, SyntheticIdentity)
+        dump = rec.model_dump()
+        assert "attack_family" not in dump
+        assert "attack_genome" not in dump
+        assert "ground_truth" not in dump
+
+
+def test_heldout_records_legitimate_lifecycle_integrity():
+    """Requirement 8: Held-out records reflect legitimate lifecycle (KYC verified, 0 risk events)."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    heldout_dataset = load_dataset(heldout_path)
+
+    for rec in heldout_dataset:
+        assert rec.account_metadata["kyc_verification_status"] == "verified"
+        assert rec.account_metadata["account_status"] == "active"
+        assert rec.lifecycle_info["risk_event_count"] == 0
+        assert rec.lifecycle_info["days_to_risky_activity"] is None
+        assert rec.lifecycle_info["lifecycle_coherence_score"] >= 0.85
+
+
+def test_heldout_dataset_loadable_with_helper():
+    """Requirement 9: Held-out dataset loads cleanly using the existing load_dataset() helper."""
+    heldout_path = Path("data/held_out/heldout_identities.json")
+    loaded = load_dataset(heldout_path)
+
+    assert isinstance(loaded, list)
+    assert len(loaded) == 500
+    assert all(isinstance(item, SyntheticIdentity) for item in loaded)
+
+
+def test_baseline_dataset_unmodified_during_evaluation():
+    """Requirement 10: Baseline training dataset remains completely unaltered with seed=42 data."""
+    baseline_path = Path("data/legitimate/baseline_identities.json")
+    assert baseline_path.exists()
+
+    baseline_dataset = load_dataset(baseline_path)
+    assert len(baseline_dataset) == 500
+
+    # Ensure all baseline IDs belong to seed 42
+    for idx, rec in enumerate(baseline_dataset):
+        assert rec.identity_id == f"ident_0042_{idx:05d}"
+
