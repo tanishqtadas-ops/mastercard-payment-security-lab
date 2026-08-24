@@ -199,14 +199,41 @@ class AIAgentAttackGenerator:
             category = self._rng.choice(template["divergent_categories"])
             merchant = self._rng.choice(template["divergent_merchants"])
 
-        # Determine actual action text based on deviations
-        if amt_dev <= 0.15 and cat_dev <= 0.25 and scope_dev <= 0.20:
-            actual_action = f"Purchased {category.replace('_', ' ')} from {merchant} for ${actual_amount:.2f}"
+        # Compute velocity burst parameters
+        if vel_dev > 0.30:
+            burst_count = max(2, int(2 + vel_dev * 10))
+            velocity_note = f" (Burst of {burst_count} rapid transactions in session)"
+            payment_channel = "ai_agent_batch_burst_api" if vel_dev > 0.50 else "ai_agent_api"
+        else:
+            burst_count = 1
+            velocity_note = ""
+            payment_channel = "ai_agent_api"
+
+        # Determine permission scope deviation modifier
+        if scope_dev > 0.60:
+            scope_violation = (
+                "Agent unilaterally elevated execution privileges to 'unrestricted_admin', "
+                "bypassed user confirmation gates, and authorized recurring secondary debit"
+            )
+        elif scope_dev > 0.20:
+            scope_violation = (
+                "Agent exceeded single-transaction operational mandate and modified authorization parameters"
+            )
+        else:
+            scope_violation = "Agent adhered strictly to authorized operational bounds"
+
+        # Determine actual action text based on all deviations
+        if amt_dev <= 0.15 and cat_dev <= 0.25 and scope_dev <= 0.20 and vel_dev <= 0.30:
+            actual_action = (
+                f"Purchased {category.replace('_', ' ')} from {merchant} for ${actual_amount:.2f}. "
+                f"{scope_violation}."
+            )
         else:
             divergent_desc = self._rng.choice(template["divergent_actions"])
             actual_action = (
                 f"Executed unauthorized transaction: {divergent_desc} at {merchant} "
-                f"(Amount: ${actual_amount:.2f}, Category: {category})"
+                f"(Amount: ${actual_amount:.2f}, Category: {category}){velocity_note}. "
+                f"Scope violation: {scope_violation}."
             )
 
         # Synthesize agent identity and session context
@@ -221,6 +248,9 @@ class AIAgentAttackGenerator:
         else:
             session_ctx = f"session_hijack_anom_remote_{agent_suffix}_ip_flagged"
 
+        if burst_count > 1:
+            session_ctx = f"{session_ctx}_burst_rate_n{burst_count}"
+
         tx_id = f"tx_agent_{round_id}_{agent_suffix}"
         transaction = Transaction(
             transaction_id=tx_id,
@@ -232,7 +262,7 @@ class AIAgentAttackGenerator:
             merchant_category=category,
             location="US-Online",
             device_id=f"device_agent_{agent_suffix}",
-            payment_channel="ai_agent_api",
+            payment_channel=payment_channel,
         )
 
         agent_event = AIAgentPaymentEvent(
@@ -263,5 +293,7 @@ class AIAgentAttackGenerator:
                 "intent_category": template["authorized_category"],
                 "executed_category": category,
                 "velocity_level": vel_dev,
+                "burst_count": burst_count,
+                "scope_deviation_level": scope_dev,
             },
         )

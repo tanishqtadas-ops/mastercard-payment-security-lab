@@ -44,7 +44,10 @@ class AIAgentFeedbackEvaluator:
         false_negative = (not predicted_fraud) and is_attack
         false_positive = predicted_fraud and (not is_attack)
 
-        important_features: Dict[str, float] = dict(
+        # Map the detector's weighted feature contributions (w_i * dimension_anomaly)
+        # to BlueTeamFeedback.important_features so downstream mutation strategies can
+        # inspect the exact contribution weights that triggered detection.
+        weighted_feature_contributions: Dict[str, float] = dict(
             prediction.feature_contributions or {}
         )
 
@@ -64,6 +67,6 @@ class AIAgentFeedbackEvaluator:
             false_positive=false_positive,
             false_negative=false_negative,
             risk_score=prediction.risk_score,
-            important_features=important_features,
+            important_features=weighted_feature_contributions,
             explanation_data=explanation_data,
         )

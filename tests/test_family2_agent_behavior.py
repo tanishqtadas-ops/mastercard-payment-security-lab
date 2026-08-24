@@ -417,3 +417,86 @@ def test_family2_in_mock_pipeline_multi_round():
         assert isinstance(r, RoundResult)
         assert r.attack_event.attack_family == AttackFamily.AGENT_BEHAVIOR
         validate_genome(r.attack_event.attack_genome)
+
+
+# ---------------------------------------------------------------------------
+# 15. Focused Dimension Impact Tests (Velocity, Scope Deviation, Weighted Features)
+# ---------------------------------------------------------------------------
+
+def test_purchase_velocity_influences_scenario_and_transaction():
+    """Verify purchase_velocity meaningfully alters actual_action, session_context, and payment_channel."""
+    low_vel_genome = dict(DEFAULT_ATTACK_GENOME)
+    low_vel_genome["purchase_velocity"] = 0.05
+
+    high_vel_genome = dict(DEFAULT_ATTACK_GENOME)
+    high_vel_genome["purchase_velocity"] = 0.85
+
+    gen_low = AIAgentAttackGenerator(genome=low_vel_genome, seed=42)
+    gen_high = AIAgentAttackGenerator(genome=high_vel_genome, seed=42)
+
+    event_low = gen_low.generate("round-vel-low")
+    event_high = gen_high.generate("round-vel-high")
+
+    scenario_low = AIAgentPaymentEvent.model_validate(event_low.scenario)
+    scenario_high = AIAgentPaymentEvent.model_validate(event_high.scenario)
+
+    # High velocity should trigger burst indicators
+    assert "Burst of" in scenario_high.actual_action
+    assert "burst_rate" in scenario_high.session_context
+    assert scenario_high.transaction.payment_channel == "ai_agent_batch_burst_api"
+
+    # Low velocity should not have burst indicators
+    assert "Burst of" not in scenario_low.actual_action
+    assert "burst_rate" not in scenario_low.session_context
+    assert scenario_low.transaction.payment_channel == "ai_agent_api"
+
+
+def test_permission_scope_deviation_influences_scenario_action():
+    """Verify permission_scope_deviation meaningfully impacts the scope violation description in actual_action."""
+    low_scope_genome = dict(DEFAULT_ATTACK_GENOME)
+    low_scope_genome["permission_scope_deviation"] = 0.05
+
+    high_scope_genome = dict(DEFAULT_ATTACK_GENOME)
+    high_scope_genome["permission_scope_deviation"] = 0.85
+
+    gen_low = AIAgentAttackGenerator(genome=low_scope_genome, seed=42)
+    gen_high = AIAgentAttackGenerator(genome=high_scope_genome, seed=42)
+
+    event_low = gen_low.generate("round-scope-low")
+    event_high = gen_high.generate("round-scope-high")
+
+    scenario_low = AIAgentPaymentEvent.model_validate(event_low.scenario)
+    scenario_high = AIAgentPaymentEvent.model_validate(event_high.scenario)
+
+    # High scope deviation should explicitly document privilege escalation / scope violation
+    assert "elevated execution privileges" in scenario_high.actual_action
+    assert "Scope violation" in scenario_high.actual_action
+
+    # Low scope deviation should show adherence to operational bounds
+    assert "adhered strictly" in scenario_low.actual_action
+
+
+def test_evaluator_and_mutator_weighted_contributions_handoff():
+    """Verify evaluator delivers weighted feature contributions to mutator to prioritize decaying top drivers."""
+    genome = dict(DEFAULT_ATTACK_GENOME)
+    det = AIAgentBlueDetector()
+    ev = AIAgentFeedbackEvaluator()
+    mut = AIAgentMutationStrategy(detected_decay=0.10)
+
+    # High amount deviation -> high weighted contribution
+    gen = AIAgentAttackGenerator(genome=genome)
+    event = gen.generate("round-weights-01")
+    pred = det.detect(event)
+    fb = ev.evaluate(event, pred)
+
+    # Important features should match detector's feature contributions
+    assert fb.important_features == pred.feature_contributions
+    assert fb.important_features["intent_amount_deviation"] > 0.15
+
+    # Mutate using feedback containing weighted contributions
+    mutated = mut.mutate(genome, fb)
+
+    # Intent amount deviation had high contribution (>0.15), so it decayed with boosted scale (1.2 * 0.10 = 0.12)
+    delta_amount = genome["intent_amount_deviation"] - mutated["intent_amount_deviation"]
+    assert delta_amount >= 0.12
+

@@ -59,14 +59,16 @@ class AIAgentMutationStrategy:
         validate_genome(genome)
 
         mutated: Dict[str, float] = {}
-        important_features = feedback.important_features or {}
+        # feedback.important_features carries the detector's weighted feature contributions (w_i * dimension_anomaly).
+        # We use these weighted contributions to apply stronger decay to the features that most contributed to detection.
+        weighted_contributions = feedback.important_features or {}
 
         if feedback.detected:
             # Attack was detected by Blue Team:
             # 1. Reduce high-deviation signals (amount, category, scope, velocity, provenance anomaly)
             # 2. Increase agent_identity_confidence (attacker impersonates legitimate agent better)
             for key, val in genome.items():
-                feature_weight = important_features.get(key, 0.0)
+                feature_weight = weighted_contributions.get(key, 0.0)
                 decay_scale = 1.2 if feature_weight > 0.15 else 1.0
                 effective_step = self.detected_decay * decay_scale
 
