@@ -11,6 +11,10 @@ from .feature_extractor import (
     FEATURE_NAMES,
     extract_identity_features,
 )
+from .evaluator import (
+    SyntheticIdentityFeedbackEvaluator,
+    SyntheticIdentityEvaluator,
+)
 
 __all__ = [
     "SyntheticIdentityBlueDetector",
@@ -18,4 +22,6 @@ __all__ = [
     "MODEL_VERSION",
     "FEATURE_NAMES",
     "extract_identity_features",
+    "SyntheticIdentityFeedbackEvaluator",
+    "SyntheticIdentityEvaluator",
 ]
