@@ -6,6 +6,7 @@ Exports the shared interfaces and the Round Controller.
 
 from .interfaces import AttackGenerator, BlueTeamDetector, FeedbackEvaluator, MutationStrategy
 from .round_controller import RoundController, RoundControllerError
+from .pipeline import Pipeline
 
 __all__ = [
     "AttackGenerator",
@@ -14,4 +15,6 @@ __all__ = [
     "MutationStrategy",
     "RoundController",
     "RoundControllerError",
+    "Pipeline",
 ]
+
