@@ -10,11 +10,12 @@ from .detector import (
     MODEL_VERSION,
     extract_mandate_features,
 )
-from .evaluator import AIAgentFeedbackEvaluator
+from .evaluator import AIAgentFeedbackEvaluator, AIAgentEvaluator
 
 __all__ = [
     "AIAgentBlueDetector",
     "AIAgentFeedbackEvaluator",
+    "AIAgentEvaluator",
     "AgentMandate",
     "DEFAULT_FEATURE_WEIGHTS",
     "DEFAULT_DETECTION_THRESHOLD",
