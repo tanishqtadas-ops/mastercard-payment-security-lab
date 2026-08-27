@@ -5,10 +5,13 @@ Converts core simulation RoundResult instances into decoupled presentation model
 and formatted representations without modifying core pipeline objects.
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 from pydantic import BaseModel, Field
 
 from schemas import AttackFamily, RoundResult
+
+if TYPE_CHECKING:
+    from .feed import DashboardFeed
 
 
 class RoundDisplayData(BaseModel):
@@ -128,3 +131,58 @@ def format_round_summary(data: Union[RoundResult, RoundDisplayData]) -> str:
     if d.explanation:
         lines.append(f"Explanation: {d.explanation}")
     return "\n".join(lines)
+
+
+class RoundResultViewer:
+    """
+    Presentation and replay component for completed RoundResult records.
+
+    Consumes RoundResult objects, RoundDisplayData, or a DashboardFeed to provide
+    deterministic human-readable views and replay capabilities for dashboard consumers.
+    """
+
+    def __init__(self, feed: Optional["DashboardFeed"] = None) -> None:
+        if feed is None:
+            from .feed import DashboardFeed
+            self._feed: DashboardFeed = DashboardFeed()
+        else:
+            self._feed = feed
+
+    @property
+    def feed(self) -> "DashboardFeed":
+        """Return the underlying DashboardFeed instance."""
+        return self._feed
+
+    def load_round(self, result: Union[RoundResult, RoundDisplayData]) -> RoundDisplayData:
+        """Ingest a single round result and return the extracted display data."""
+        return self._feed.ingest(result)
+
+    def load_rounds(
+        self,
+        results: Sequence[Union[RoundResult, RoundDisplayData]],
+    ) -> List[RoundDisplayData]:
+        """Ingest multiple round results in order."""
+        return self._feed.ingest_many(results)
+
+    def display_round(self, data: Union[RoundResult, RoundDisplayData]) -> str:
+        """Render a single RoundResult or RoundDisplayData in human-readable format."""
+        return format_round_summary(data)
+
+    def display_latest(self) -> Optional[str]:
+        """Render the most recently ingested round summary, or None if empty."""
+        latest = self._feed.get_latest_round()
+        if latest is None:
+            return None
+        return format_round_summary(latest)
+
+    def replay(self) -> List[str]:
+        """Replay all ingested round summaries in chronological sequence."""
+        return [format_round_summary(r) for r in self._feed.get_rounds()]
+
+    def display_all(self, separator: str = "\n\n") -> str:
+        """Render all ingested rounds concatenated with a separator."""
+        return separator.join(self.replay())
+
+    def get_round_dict(self, data: Union[RoundResult, RoundDisplayData]) -> Dict[str, Any]:
+        """Format a round as a structured dictionary for JSON/API consumers."""
+        return format_round_dict(data)

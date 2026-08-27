@@ -6,6 +6,7 @@ Provides decoupled presentation data models and feed management for simulation r
 
 from .presenter import (
     RoundDisplayData,
+    RoundResultViewer,
     extract_display_data,
     format_round_dict,
     format_round_summary,
@@ -14,6 +15,7 @@ from .feed import DashboardFeed
 
 __all__ = [
     "RoundDisplayData",
+    "RoundResultViewer",
     "extract_display_data",
     "format_round_dict",
     "format_round_summary",
