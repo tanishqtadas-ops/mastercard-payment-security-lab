@@ -12,6 +12,22 @@ from .presenter import (
     format_round_summary,
 )
 from .feed import DashboardFeed
+from .arms_race import (
+    ArmsRacePresenter,
+    ArmsRaceReport,
+    ArmsRaceSummary,
+    DetectionTrendPoint,
+    ModelUpdateMarker,
+    RecoverySegment,
+    RiskTrendPoint,
+    TimelinePoint,
+    build_arms_race_history,
+    calculate_attack_difficulty,
+    detection_trend,
+    model_update_rounds,
+    recovery_segments,
+    risk_trend,
+)
 
 __all__ = [
     "RoundDisplayData",
@@ -20,4 +36,18 @@ __all__ = [
     "format_round_dict",
     "format_round_summary",
     "DashboardFeed",
+    "ArmsRacePresenter",
+    "ArmsRaceReport",
+    "ArmsRaceSummary",
+    "DetectionTrendPoint",
+    "ModelUpdateMarker",
+    "RecoverySegment",
+    "RiskTrendPoint",
+    "TimelinePoint",
+    "build_arms_race_history",
+    "calculate_attack_difficulty",
+    "detection_trend",
+    "model_update_rounds",
+    "recovery_segments",
+    "risk_trend",
 ]
