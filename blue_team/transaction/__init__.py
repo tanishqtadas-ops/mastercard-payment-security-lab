@@ -9,6 +9,10 @@ from .detector import (
     DEFAULT_DETECTION_THRESHOLD,
     MODEL_VERSION,
 )
+from .evaluator import (
+    TransactionFeedbackEvaluator,
+    TransactionEvaluator,
+)
 from .feature_extractor import (
     FEATURE_NAMES,
     extract_transaction_features,
@@ -17,6 +21,8 @@ from .feature_extractor import (
 __all__ = [
     "TransactionBlueDetector",
     "TransactionDetector",
+    "TransactionFeedbackEvaluator",
+    "TransactionEvaluator",
     "DEFAULT_FEATURE_WEIGHTS",
     "DEFAULT_DETECTION_THRESHOLD",
     "MODEL_VERSION",
