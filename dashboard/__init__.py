@@ -28,6 +28,13 @@ from .arms_race import (
     recovery_segments,
     risk_trend,
 )
+from .controller import (
+    Dashboard,
+    DashboardEvaluationMetrics,
+    DashboardState,
+    GenomeProgressionStep,
+    PaymentSecurityDashboard,
+)
 
 __all__ = [
     "RoundDisplayData",
@@ -50,4 +57,9 @@ __all__ = [
     "model_update_rounds",
     "recovery_segments",
     "risk_trend",
+    "Dashboard",
+    "DashboardEvaluationMetrics",
+    "DashboardState",
+    "GenomeProgressionStep",
+    "PaymentSecurityDashboard",
 ]
