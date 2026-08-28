@@ -1,5 +1,5 @@
 """
-blue_team/learning — Blue-Team failure memory, dataset assembly, and learning foundation.
+blue_team/learning — Blue-Team failure memory, dataset assembly, and retraining controller.
 """
 
 from .failure_memory import (
@@ -17,6 +17,16 @@ from .dataset import (
     assemble_retraining_dataset,
     validate_no_holdout_leakage,
 )
+from .retraining import (
+    EvaluationMetrics,
+    ModelUpdateRecord,
+    DetectorTrainer,
+    Family1TransactionTrainer,
+    Family2AIAgentTrainer,
+    Family3SyntheticIdentityTrainer,
+    RetrainingController,
+    compute_binary_metrics,
+)
 
 __all__ = [
     "FailureRecord",
@@ -30,4 +40,12 @@ __all__ = [
     "RetrainingDatasetAssembler",
     "assemble_retraining_dataset",
     "validate_no_holdout_leakage",
+    "EvaluationMetrics",
+    "ModelUpdateRecord",
+    "DetectorTrainer",
+    "Family1TransactionTrainer",
+    "Family2AIAgentTrainer",
+    "Family3SyntheticIdentityTrainer",
+    "RetrainingController",
+    "compute_binary_metrics",
 ]
