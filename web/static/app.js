@@ -200,10 +200,18 @@ function renderXGBoostSummary(elementId, results) {
 
     const feats = lastResult.prediction_result.feature_contributions;
     if (feats && Object.keys(feats).length > 0) {
-        html += `<div style="margin-bottom:10px;"><strong>Feature Contributions:</strong></div><ul>`;
-        for (const [k, v] of Object.entries(feats)) {
-            html += `<li>${k}: ${v.toFixed(4)}</li>`;
-        }
+        const sortedFeats = Object.entries(feats).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+        const topFeats = sortedFeats.slice(0, 5);
+
+        html += `<div style="margin-bottom:10px;"><strong>Top Feature Contributions:</strong></div><ul style="list-style-type: none; padding-left: 0;">`;
+        topFeats.forEach(([k, v], index) => {
+            const isTop = index === 0;
+            const style = isTop ? 'font-weight: bold; color: var(--text-highlight); font-size: 1.1em;' : '';
+            html += `<li style="${style} margin-bottom: 5px;">
+                <span style="display:inline-block; width:220px;">${k}</span>
+                <span>${v > 0 ? '+' : ''}${v.toFixed(4)}</span>
+            </li>`;
+        });
         html += `</ul>`;
     } else {
         html += `<div>No feature contribution data exposed.</div>`;
@@ -245,44 +253,70 @@ function drawRiskChart(canvasId, results, title) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Data points
-    const stepX = width / Math.max(1, (results.length - 1));
+    if (results.length <= 2) {
+        // Bar Chart for sparse data
+        const barWidth = 40;
+        const spacing = 60;
+        const totalContentWidth = (results.length * barWidth) + ((results.length - 1) * spacing);
+        const startX = padding + (width - totalContentWidth) / 2;
 
-    ctx.beginPath();
-    ctx.strokeStyle = '#66fcf1';
-    ctx.lineWidth = 2;
+        results.forEach((r, i) => {
+            const x = startX + (i * (barWidth + spacing));
+            const barHeight = r.prediction_result.risk_score * height;
+            const y = padding + height - barHeight;
 
-    results.forEach((r, i) => {
-        const x = padding + (i * stepX);
-        const y = padding + height - (r.prediction_result.risk_score * height);
+            ctx.fillStyle = r.feedback.detected ? '#ff4c4c' : '#45a29e';
+            ctx.fillRect(x, y, barWidth, barHeight);
 
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
+            ctx.fillStyle = '#c5c6c7';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(r.prediction_result.risk_score.toFixed(4), x + barWidth/2, y - 5);
+            ctx.fillText(`R${r.outcome_metrics.round_index}`, x + barWidth/2, padding + height + 15);
+        });
+    } else {
+        // Line chart for multi-point data
+        const stepX = width / Math.max(1, (results.length - 1));
 
-    // Dots
-    results.forEach((r, i) => {
-        const x = padding + (i * stepX);
-        const y = padding + height - (r.prediction_result.risk_score * height);
-
-        ctx.fillStyle = r.feedback.detected ? '#ff4c4c' : '#45a29e';
         ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fill();
-    });
+        ctx.strokeStyle = '#66fcf1';
+        ctx.lineWidth = 2;
 
-    // Labels
+        results.forEach((r, i) => {
+            const x = padding + (i * stepX);
+            const y = padding + height - (r.prediction_result.risk_score * height);
+
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Dots
+        results.forEach((r, i) => {
+            const x = padding + (i * stepX);
+            const y = padding + height - (r.prediction_result.risk_score * height);
+
+            ctx.fillStyle = r.feedback.detected ? '#ff4c4c' : '#45a29e';
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // X-axis Labels
+        ctx.fillStyle = '#c5c6c7';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        results.forEach((r, i) => {
+            const x = padding + (i * stepX);
+            ctx.fillText(`R${r.outcome_metrics.round_index}`, x, padding + height + 15);
+        });
+    }
+
+    // Y-axis Labels
     ctx.fillStyle = '#c5c6c7';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText('1.0', padding - 5, padding + 5);
     ctx.fillText('0.5', padding - 5, thresholdY + 3);
     ctx.fillText('0.0', padding - 5, padding + height);
-
-    ctx.textAlign = 'center';
-    results.forEach((r, i) => {
-        const x = padding + (i * stepX);
-        ctx.fillText(`R${r.outcome_metrics.round_index}`, x, padding + height + 15);
-    });
 }
