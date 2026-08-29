@@ -246,6 +246,9 @@ def model_update_rounds(
     """
     Identify and extract model update / retraining markers across rounds.
 
+    Tracks per-family model version changes and explicit model update indicators
+    to avoid false update markers during cross-family boundary transitions.
+
     Args:
         results: Sequence of completed simulation round results.
 
@@ -254,32 +257,48 @@ def model_update_rounds(
     """
     display_list = _to_display_data_list(results)
     markers: List[ModelUpdateMarker] = []
+    last_version_by_family: Dict[str, str] = {}
 
-    for idx in range(1, len(display_list)):
-        prev = display_list[idx - 1]
-        curr = display_list[idx]
+    for idx, curr in enumerate(display_list, start=1):
+        fam = curr.family or "unknown"
 
-        # Check version transition
-        if curr.model_version and prev.model_version and curr.model_version != prev.model_version:
-            markers.append(
-                ModelUpdateMarker(
-                    round_index=idx + 1,
-                    round_id=curr.round_id,
-                    previous_model_version=prev.model_version,
-                    new_model_version=curr.model_version,
-                    trigger_reason="model_version_changed",
-                )
+        # 1. Explicit model update annotation on the round
+        if curr.outcome_metrics.get("model_updated") or curr.outcome_metrics.get("retrained"):
+            prev_v = curr.outcome_metrics.get(
+                "previous_model_version",
+                last_version_by_family.get(fam, curr.model_version or "initial"),
             )
-        elif curr.outcome_metrics.get("model_updated") or curr.outcome_metrics.get("retrained"):
+            new_v = curr.outcome_metrics.get(
+                "new_model_version",
+                curr.model_version or "updated",
+            )
             markers.append(
                 ModelUpdateMarker(
-                    round_index=idx + 1,
+                    round_index=idx,
                     round_id=curr.round_id,
-                    previous_model_version=prev.model_version or "initial",
-                    new_model_version=curr.model_version or "updated",
+                    previous_model_version=prev_v,
+                    new_model_version=new_v,
                     trigger_reason="retraining_trigger",
                 )
             )
+            last_version_by_family[fam] = new_v
+        # 2. Version transition within the SAME family
+        elif fam in last_version_by_family:
+            prev_ver = last_version_by_family[fam]
+            if curr.model_version and curr.model_version != prev_ver:
+                markers.append(
+                    ModelUpdateMarker(
+                        round_index=idx,
+                        round_id=curr.round_id,
+                        previous_model_version=prev_ver,
+                        new_model_version=curr.model_version,
+                        trigger_reason="model_version_changed",
+                    )
+                )
+                last_version_by_family[fam] = curr.model_version
+        else:
+            if curr.model_version:
+                last_version_by_family[fam] = curr.model_version
 
     return markers
 
