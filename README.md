@@ -368,6 +368,19 @@ Or directly:
 python demo/run_demo.py
 ```
 
+### Web Dashboard Prototype
+
+The web prototype is local/offline and uses the existing deterministic simulation/evaluation pipeline to visualize results.
+
+Run the web server:
+
+```bash
+python -m uvicorn web.app:app --host 127.0.0.1 --port 8000
+```
+
+Then open your browser to:
+http://127.0.0.1:8000
+
 ### JSON structured output
 
 ```bash
