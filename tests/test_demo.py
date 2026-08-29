@@ -113,9 +113,8 @@ def test_deterministic_repeated_demo():
     run_a = run_demo(seed=42, quiet=True)
     run_b = run_demo(seed=42, quiet=True)
 
-    assert run_a.rendered_output == run_b.rendered_output
-    assert run_a.dashboard_state.arms_race_summary.model_update_count == run_b.dashboard_state.arms_race_summary.model_update_count
-    assert run_a.post_learning_recovery_observed == run_b.post_learning_recovery_observed
+    from demo.run_demo import serialize_deterministic_demo_json
+    assert serialize_deterministic_demo_json(run_a) == serialize_deterministic_demo_json(run_b), "Strict JSON output is not deterministic"
 
 
 # ===========================================================================
