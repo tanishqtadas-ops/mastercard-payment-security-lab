@@ -506,6 +506,29 @@ def run_demo(
     return runner.run()
 
 
+def serialize_deterministic_demo_json(result: DemoRunResult) -> str:
+    """Serialize the demo result to JSON, stripping wall-clock timestamps to guarantee byte-for-byte determinism."""
+    payload = {
+        "config": result.config.model_dump(),
+        "total_rounds": len(result.all_results),
+        "model_updates": len(result.update_records),
+        "post_learning_recovery_observed": result.post_learning_recovery_observed,
+        "live_evaluation": result.evaluation_report.model_dump(),
+        "clean_evaluation": {k: v.model_dump() for k, v in result.clean_eval_results.items()},
+        "dashboard_summary": result.dashboard_state.arms_race_summary.model_dump(),
+    }
+
+    def _strip_timestamps(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            return {k: _strip_timestamps(v) for k, v in obj.items() if k != "timestamp"}
+        elif isinstance(obj, list):
+            return [_strip_timestamps(v) for v in obj]
+        return obj
+
+    sanitized_payload = _strip_timestamps(payload)
+    return json.dumps(sanitized_payload, indent=2, default=str)
+
+
 def main() -> int:
     """CLI Entrypoint for judges and evaluators."""
     parser = argparse.ArgumentParser(
@@ -534,16 +557,7 @@ def main() -> int:
     result = runner.run()
 
     if args.json:
-        payload = {
-            "config": result.config.model_dump(),
-            "total_rounds": len(result.all_results),
-            "model_updates": len(result.update_records),
-            "post_learning_recovery_observed": result.post_learning_recovery_observed,
-            "live_evaluation": result.evaluation_report.model_dump(),
-            "clean_evaluation": {k: v.model_dump() for k, v in result.clean_eval_results.items()},
-            "dashboard_summary": result.dashboard_state.arms_race_summary.model_dump(),
-        }
-        print(json.dumps(payload, indent=2, default=str))
+        print(serialize_deterministic_demo_json(result))
 
     return 0
 
