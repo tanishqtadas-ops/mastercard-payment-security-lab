@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastercard Payment Security Lab Prototype</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-titles">
+                    <h1>Mastercard Payment Security Lab</h1>
+                    <h2>Adaptive Red Team vs Blue Team</h2>
+                </div>
+                <div class="header-badges">
+                    <span class="badge offline">Offline</span>
+                    <span class="badge deterministic">Deterministic</span>
+                    <span class="badge seed">Seed 42</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="summary-cards" id="summary-cards">
+            <div class="card" id="card-rounds">
+                <div class="card-title">Total Rounds</div>
+                <div class="card-value">-</div>
+            </div>
+            <div class="card" id="card-detection">
+                <div class="card-title">Live Attack Detection Rate</div>
+                <div class="card-value">-</div>
+            </div>
+            <div class="card" id="card-updates">
+                <div class="card-title">Model Updates</div>
+                <div class="card-value">-</div>
+            </div>
+            <div class="card" id="card-recovery">
+                <div class="card-title">Post-Learning Recovery</div>
+                <div class="card-value">-</div>
+            </div>
+        </section>
+
+        <nav class="family-tabs">
+            <button class="tab-btn active" data-target="family1">Family 1</button>
+            <button class="tab-btn" data-target="family2">Family 2</button>
+            <button class="tab-btn" data-target="family3">Family 3</button>
+        </nav>
+
+        <main class="app-main">
+            <!-- Family 1 View -->
+            <section class="tab-content active" id="family1">
+                <h3>Adaptive Transaction-Pattern Evasion</h3>
+
+                <div class="dashboard-grid">
+                    <div class="grid-col left-col">
+                        <div class="panel">
+                            <h4>Simulation Timeline</h4>
+                            <div class="timeline" id="f1-timeline">
+                                <!-- Timeline items injected here -->
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h4>Blue Team Learning</h4>
+                            <div class="learning-panel" id="f1-learning">
+                                <!-- Learning/Update records injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-col right-col">
+                        <div class="panel">
+                            <h4>Risk Score Chart</h4>
+                            <div class="chart-container">
+                                <canvas id="f1-risk-chart" width="400" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h4>Evaluation</h4>
+                            <div class="eval-panel" id="f1-evaluation">
+                                <!-- Evaluation metrics injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Family 2 View -->
+            <section class="tab-content" id="family2">
+                <h3>Unauthorized / Malicious AI-Agent Payment Behavior</h3>
+
+                <div class="dashboard-grid">
+                    <div class="grid-col left-col">
+                        <div class="panel">
+                            <h4>Simulation Timeline</h4>
+                            <div class="timeline" id="f2-timeline"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-col right-col">
+                        <div class="panel">
+                            <h4>Risk Score Chart</h4>
+                            <div class="chart-container">
+                                <canvas id="f2-risk-chart" width="400" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h4>Evaluation</h4>
+                            <div class="eval-panel" id="f2-evaluation"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Family 3 View -->
+            <section class="tab-content" id="family3">
+                <h3>Synthetic Identity / Account Lifecycle</h3>
+
+                <div class="dashboard-grid">
+                    <div class="grid-col left-col">
+                        <div class="panel">
+                            <h4>Simulation Timeline</h4>
+                            <div class="timeline" id="f3-timeline"></div>
+                        </div>
+                        <div class="panel">
+                            <h4>XGBoost Model Summary</h4>
+                            <div class="xgboost-panel" id="f3-xgboost"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-col right-col">
+                        <div class="panel">
+                            <h4>Risk Score Chart</h4>
+                            <div class="chart-container">
+                                <canvas id="f3-risk-chart" width="400" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h4>Evaluation</h4>
+                            <div class="eval-panel" id="f3-evaluation"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <div class="panel">
+                <h4>Arms-Race Summary</h4>
+                <div class="arms-race-summary" id="arms-race-summary">
+                    <!-- Global summary injected here -->
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="/static/app.js"></script>
+</body>
+</html>
