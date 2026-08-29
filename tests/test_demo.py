@@ -19,7 +19,7 @@ from typing import Any, Dict, List
 import pytest
 from pydantic import ValidationError
 
-from demo import (
+from demo.run_demo import (
     DemoConfig,
     DemoRunResult,
     DemoRunner,
