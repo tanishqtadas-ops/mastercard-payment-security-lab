@@ -516,6 +516,10 @@ def serialize_deterministic_demo_json(result: DemoRunResult) -> str:
         "live_evaluation": result.evaluation_report.model_dump(),
         "clean_evaluation": {k: v.model_dump() for k, v in result.clean_eval_results.items()},
         "dashboard_summary": result.dashboard_state.arms_race_summary.model_dump(),
+        "family1_results": [r.model_dump() for r in result.family1_results],
+        "family2_results": [r.model_dump() for r in result.family2_results],
+        "family3_results": [r.model_dump() for r in result.family3_results],
+        "update_records": [u.model_dump() for u in result.update_records],
     }
 
     def _strip_timestamps(obj: Any) -> Any:
